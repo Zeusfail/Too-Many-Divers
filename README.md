@@ -63,6 +63,17 @@ Check your UE4SS log output to confirm patches and hook registration.
 
 This is an unofficial mod. Use at your own risk.
 
+## Testing Status
+
+This mod has not been tested in a controlled way.
+
+- No functional test suite has been run.
+- We do not know for sure whether it works in every game state.
+- Performance impact has not been measured.
+- There may be unexpected side effects, instability, or gameplay consequences.
+
+Use it only if you accept the risk of bugs, crashes, or other unintended behavior.
+
 ## License
 
 MIT License. See LICENSE.
