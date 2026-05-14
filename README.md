@@ -39,8 +39,8 @@ The mod retries and monitors values to prevent them from reverting during play.
 
 ## Installation
 
-1. Copy this folder into your UE4SS mods directory:
-   - ue4ss/Mods/MorePlayers
+1. Copy the folder TooManyDivers into your UE4SS mods directory:
+   - ue4ss/Mods/TooManyDivers
 2. Ensure the file enabled.txt exists in the mod folder.
 3. Launch the game.
 

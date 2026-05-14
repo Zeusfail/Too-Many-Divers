@@ -1,5 +1,5 @@
 local TARGET_MAX_PLAYERS = 16
-local MOD_TAG = "[Too-Many-Divers]"
+local MOD_TAG = "[TooManyDivers]"
 local INIT_GUARD = "__SN2_MORE_PLAYERS_INITIALIZED"
 local HOST_SESSION_HOOK_PATH = "/Script/UWESonar.UWEOnlineSessionSubsystem:HostSessionAsync"
 local HOOK_RETRY_DELAY_MS = 1000
