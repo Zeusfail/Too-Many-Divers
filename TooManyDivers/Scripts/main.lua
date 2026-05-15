@@ -37,12 +37,6 @@ local CLASS_DEFS = {
         fields = { "MaxPlayers", "MaxSessionPlayerCount" }
     },
     {
-        short_name = "GameEngine",
-        class_name = "/Script/Engine.GameEngine",
-        cdo_name = "/Script/Engine.Default__GameEngine",
-        fields = { "MaxPlayers" }
-    },
-    {
         short_name = "UWEMultiplayerHostedSessionViewModel",
         class_name = "/Script/UWESonar.UWEMultiplayerHostedSessionViewModel",
         cdo_name = "/Script/UWESonar.Default__UWEMultiplayerHostedSessionViewModel",
@@ -303,7 +297,6 @@ local function on_pre_login_pre(self_param, options_param, address_param, unique
         return
     end
     log("PreLogin: player attempting to connect -- re-asserting MaxPlayers")
-    set_numeric_field(self_obj, "MaxPlayers", "PreLogin self")
     apply_existing_patches()
 end
 
