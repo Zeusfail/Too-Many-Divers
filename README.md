@@ -1,79 +1,113 @@
 # Too-Many-Divers
 
-A UE4SS mod for Subnautica 2 that increases multiplayer session capacity by patching runtime session limits.
+A [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) mod for **Subnautica 2** that increases multiplayer session capacity by patching runtime session limits.
 
-## Testing Status
+---
 
-This mod has not been tested in a controlled way.
+## ⚠️ Testing Status
 
-- No functional test suite has been run.
-- We do not know for sure whether it works in every game state.
-- Performance impact has not been measured.
-- There may be unexpected side effects, instability, or gameplay consequences.
+**This mod has not been thoroughly tested.**
 
-Use it only if you accept the risk of bugs, crashes, or other unintended behavior.
+- No formal test suite has been run
+- Behavior in all game states is not guaranteed
+- Performance impact has not been measured
+- Instability, crashes, or unexpected side effects may occur
+
+> Use it only if you accept the risk of bugs, crashes, or unintended behavior.
+
+---
 
 ## About
 
-Too-Many-Divers forces the game to use a higher player cap (default: 16) by patching:
+Too-Many-Divers raises the game's player cap (default: **16**) by patching the following at runtime:
 
-- SN2GameSession.MaxPlayers
-- UWEOnlineSessionSubsystem.MaxSessionPlayerCount
-- UWEHostSessionRequest.MaxPlayers
-- UWEHostSessionRequest.MaxSessionPlayerCount
+- `SN2GameSession.MaxPlayers`
+- `UWEOnlineSessionSubsystem.MaxSessionPlayerCount`
+- `UWEHostSessionRequest.MaxPlayers`
+- `UWEHostSessionRequest.MaxSessionPlayerCount`
 
-The mod retries and monitors values to prevent them from reverting during play.
+The mod continuously monitors these values and re-applies patches if they are reset by the game.
+
+---
 
 ## Features
 
-- Raises max players to 16
+- Raises the max player count to 16 (configurable)
 - Patches both default objects and live instances
-- Hooks HostSessionAsync to patch host requests before session start
-- Auto-retries hook registration when game systems are not ready yet
-- Periodic monitor that re-applies patches if values are reset
+- Hooks `HostSessionAsync` to patch host requests before session start
+- Auto-retries hook registration when game systems are not yet ready
+- Periodic monitor that re-applies patches if values are reset mid-session
+
+---
 
 ## Requirements
 
 - Subnautica 2
-- UE4SS installed and working
+- [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) installed and working
+
+---
 
 ## Installation
 
-1. Copy the folder TooManyDivers into your UE4SS mods directory:
-   - ue4ss/Mods/TooManyDivers
-2. Ensure the file enabled.txt exists in the mod folder.
-3. Launch the game.
+1. Download the latest release and extract the archive.
+2. Navigate to your Subnautica 2 installation folder, then go to the UE4SS mods directory:
+   - **Steam:** `Subnautica2\Binaries\Win64\ue4ss\Mods\`
+   - **Microsoft Store / Game Pass:** `Subnautica2\Binaries\WinGDK\ue4ss\Mods\`
+3. Copy the `TooManyDivers` folder into that directory:
+   ```
+   ue4ss/Mods/TooManyDivers/
+   ```
+   > ⚠️ The mod folder must be placed **directly** inside `Mods\` — not inside a subfolder.
+4. Ensure the file `enabled.txt` exists inside the `TooManyDivers` folder.
+5. Launch the game.
+
+---
 
 ## Configuration
 
-Open Scripts/main.lua and edit this value:
+Open `Scripts/main.lua` and edit the following value:
 
-- TARGET_MAX_PLAYERS = 16
+```lua
+TARGET_MAX_PLAYERS = 16
+```
 
-Set any number you want, then restart the game.
+Set it to any number you want, then restart the game.
 
-## Logs and Validation
+---
 
-The mod prints logs tagged with:
+## Logs & Validation
 
-- [Too-Many-Divers]
+All mod output is tagged with `[Too-Many-Divers]` in the UE4SS log.
 
-Check your UE4SS log output to confirm patches and hook registration.
+Check your UE4SS log file to confirm that patches and hook registration are working correctly.
+
+---
 
 ## Project Structure
 
-- Scripts/main.lua: runtime patch logic
-- enabled.txt: enables the mod
+```
+TooManyDivers/
+├── Scripts/
+│   └── main.lua      # Runtime patch logic
+└── enabled.txt       # Enables the mod in UE4SS
+```
+
+---
 
 ## Limitations
 
-- This only changes session/player cap values at runtime.
-- Network stability and gameplay behavior still depend on the game and platform.
+- Only patches session/player cap values at runtime — it does not modify game files.
+- Network stability and gameplay behavior beyond 4 players depend on the game engine and platform infrastructure.
+- There is no guarantee the game will function correctly with a high player count.
+
+---
 
 ## Disclaimer
 
-This is an unofficial mod. Use at your own risk.
+This is an unofficial, community-made mod. It is not affiliated with or endorsed by Unknown Worlds Entertainment. **Use at your own risk.**
+
+---
 
 ## License
 
-MIT License. See LICENSE.
+MIT License — see [LICENSE](LICENSE) for details.
