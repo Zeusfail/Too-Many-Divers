@@ -1,5 +1,85 @@
-local TARGET_MAX_PLAYERS = 16
 local MOD_TAG = "[TooManyDivers]"
+
+local DEFAULT_MAX_PLAYERS = 16
+local MIN_MAX_PLAYERS = 4
+local MAX_MAX_PLAYERS = 64
+
+local function load_config()
+    local src = debug.getinfo(1, "S").source
+    local script_dir = src:match("^@?(.+)[/\\][^/\\]+$")
+    if not script_dir then
+        print(string.format("%s Could not resolve config path, using default (%d)\n", MOD_TAG, DEFAULT_MAX_PLAYERS))
+        return DEFAULT_MAX_PLAYERS
+    end
+    local config_path = script_dir .. "\\..\\config\\settings.json"
+    local file = io.open(config_path, "r")
+    if not file then
+        print(string.format("%s config/settings.json not found, using default (%d)\n", MOD_TAG, DEFAULT_MAX_PLAYERS))
+        return DEFAULT_MAX_PLAYERS
+    end
+    local content = file:read("*a")
+    file:close()
+    local raw = content:match('"MaxPlayers"%s*:%s*(%d+)')
+    local value = raw and tonumber(raw)
+    if not value then
+        print(string.format("%s MaxPlayers missing from config, using default (%d)\n", MOD_TAG, DEFAULT_MAX_PLAYERS))
+        return DEFAULT_MAX_PLAYERS
+    end
+    if value < MIN_MAX_PLAYERS or value > MAX_MAX_PLAYERS then
+        print(string.format("%s MaxPlayers=%d hors plage [%d-%d], using default (%d)\n",
+            MOD_TAG, value, MIN_MAX_PLAYERS, MAX_MAX_PLAYERS, DEFAULT_MAX_PLAYERS))
+        return DEFAULT_MAX_PLAYERS
+    end
+    return value
+end
+
+local TARGET_MAX_PLAYERS = load_config()
+
+local MANIFEST_PATH = "./ue4ss/Mods/SN2ModSettings/registrations/TooManyDivers.lua"
+
+local function write_sn2modsettings_manifest()
+    local dir = MANIFEST_PATH:match("(.*[/\\])")
+    os.execute('mkdir "' .. dir:gsub("/", "\\") .. '" 2>nul')
+    local f = io.open(MANIFEST_PATH, "w")
+    if not f then
+        print(string.format("%s SN2ModSettings manifest: impossible d'ecrire %s (SN2ModSettings absent ou chemin invalide)\n", MOD_TAG, MANIFEST_PATH))
+        return
+    end
+    -- Le widget ApplicationScaleSlider affiche value*100 (c'est un widget de pourcentage).
+    -- On stocke donc les valeurs divisees par 100 : 0.16 s'affiche comme 16, 2.55 comme 255.
+    -- TooManyDivers relit et multiplie par 100 pour recuperer le vrai nombre de joueurs.
+    -- IMPORTANT : string.format("%.2f") utilise le separateur decimal de la locale systeme
+    -- (virgule en locale francaise). On force le point via gsub pour que le manifest soit
+    -- du Lua valide quel que soit la locale de la machine.
+    local function f2s(n)
+        return (string.format("%.2f", n):gsub(",", "."))
+    end
+    f:write(string.format([=[return {
+    name    = "TooManyDivers",
+    display = "Too Many Divers",
+    settings = {
+        {
+            key         = "MaxPlayers",
+            title       = "Max Players",
+            description = "Nombre maximum de joueurs par session (%d a %d). Les changements s appliquent en temps reel sans redemarrer.",
+            type        = "slider",
+            default     = %s,
+            min         = %s,
+            max         = %s,
+            step        = 0.01,
+        },
+    },
+}
+]=], MIN_MAX_PLAYERS, MAX_MAX_PLAYERS,
+        f2s(TARGET_MAX_PLAYERS / 100.0),
+        f2s(MIN_MAX_PLAYERS     / 100.0),
+        f2s(MAX_MAX_PLAYERS     / 100.0)))
+    f:close()
+    print(string.format("%s SN2ModSettings manifest ecrit (default=%d)\n", MOD_TAG, TARGET_MAX_PLAYERS))
+end
+
+write_sn2modsettings_manifest()
+
 local INIT_GUARD = "__SN2_MORE_PLAYERS_INITIALIZED"
 local HOST_SESSION_HOOK_PATH = "/Script/UWESonar.UWEOnlineSessionSubsystem:HostSessionAsync"
 local HOOK_RETRY_DELAY_MS = 1000
@@ -327,10 +407,28 @@ local function start_monitor()
     ExecuteWithDelay(MONITOR_DELAY_MS, monitor_loop)
 end
 
+-- Read the saved value from SN2ModSettings SharedVariable and update TARGET_MAX_PLAYERS.
+-- Called at startup (before the first apply_existing_patches) so the correct player
+-- count is used from the very first patch, not just after the first LoopAsync tick.
+local function load_from_shared()
+    if not ModRef then return end
+    local ok, raw = pcall(function()
+        return ModRef:GetSharedVariable("SN2ModSettings/TooManyDivers/MaxPlayers")
+    end)
+    if not ok or raw == nil or type(raw) ~= "number" then return end
+    -- Le manifest stocke value/100 (compensation du facteur x100 du widget d'affichage)
+    local value = math.floor(raw * 100 + 0.5)
+    if value < MIN_MAX_PLAYERS or value > MAX_MAX_PLAYERS then return end
+    if value == TARGET_MAX_PLAYERS then return end
+    TARGET_MAX_PLAYERS = value
+    log("MaxPlayers initialise depuis SN2ModSettings: %d", TARGET_MAX_PLAYERS)
+end
+
 local function bootstrap()
     for _, config in ipairs(CLASS_DEFS) do
         register_new_object_notify(config)
     end
+    load_from_shared() -- Seed TARGET_MAX_PLAYERS from SN2ModSettings before first patch
     apply_existing_patches()
     try_register_host_session_hook()
     start_monitor() -- Start optional monitor
@@ -349,4 +447,21 @@ ExecuteWithDelay(PATCH_RETRY_DELAY_MS_2, function()
 end)
 ExecuteWithDelay(PATCH_RETRY_DELAY_MS_3, function()
     ExecuteInGameThread(apply_existing_patches)
+end)
+
+LoopAsync(1000, function()
+    if not ModRef then return end
+    local ok, raw = pcall(function()
+        return ModRef:GetSharedVariable("SN2ModSettings/TooManyDivers/MaxPlayers")
+    end)
+    if not ok or raw == nil or type(raw) ~= "number" then return end
+    -- Le manifest stocke value/100 (compensation du facteur x100 du widget d'affichage)
+    local value = math.floor(raw * 100 + 0.5)
+    if value < MIN_MAX_PLAYERS or value > MAX_MAX_PLAYERS then return end
+    if value == TARGET_MAX_PLAYERS then return end
+    TARGET_MAX_PLAYERS = value
+    ExecuteInGameThread(function()
+        log("MaxPlayers mis a jour via SN2ModSettings: %d", TARGET_MAX_PLAYERS)
+        apply_existing_patches()
+    end)
 end)
