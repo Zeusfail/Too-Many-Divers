@@ -19,16 +19,20 @@ A [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) mod for **Subnautica 2** that in
 
 ## About
 
+
 Too-Many-Divers raises the game's player cap (default: **16**) by patching the following at runtime:
 
 - `SN2GameSession.MaxPlayers`
 - `UWEOnlineSessionSubsystem.MaxSessionPlayerCount`
 - `UWEHostSessionRequest.MaxPlayers`
 - `UWEHostSessionRequest.MaxSessionPlayerCount`
+- `UWEMultiplayerHostedSessionViewModel.MaxPlayers`
+- `GameSession.MaxPlayers`
 
 The mod continuously monitors these values and re-applies patches if they are reset by the game.
 
 ---
+
 
 ## Features
 
