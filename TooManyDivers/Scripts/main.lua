@@ -2,6 +2,7 @@ local TARGET_MAX_PLAYERS = 16
 local MOD_TAG = "[TooManyDivers]"
 local INIT_GUARD = "__SN2_MORE_PLAYERS_INITIALIZED"
 local HOST_SESSION_HOOK_PATH = "/Script/UWESonar.UWEOnlineSessionSubsystem:HostSessionAsync"
+local PRE_LOGIN_HOOK_PATH = "/Script/Engine.GameModeBase:PreLogin"
 local HOOK_RETRY_DELAY_MS = 1000
 local MAX_HOOK_ATTEMPTS = 10
 local MONITOR_DELAY_MS = 10000 -- Monitor state every 10 seconds
@@ -34,12 +35,35 @@ local CLASS_DEFS = {
         class_name = "/Script/UWESonar.UWEHostSessionRequest",
         cdo_name = "/Script/UWESonar.Default__UWEHostSessionRequest",
         fields = { "MaxPlayers", "MaxSessionPlayerCount" }
+    },
+    {
+        short_name = "GameEngine",
+        class_name = "/Script/Engine.GameEngine",
+        cdo_name = "/Script/Engine.Default__GameEngine",
+        fields = { "MaxPlayers" }
+    },
+    {
+        short_name = "UWEMultiplayerHostedSessionViewModel",
+        class_name = "/Script/UWESonar.UWEMultiplayerHostedSessionViewModel",
+        cdo_name = "/Script/UWESonar.Default__UWEMultiplayerHostedSessionViewModel",
+        fields = { "MaxPlayers" }
+    },
+    {
+        short_name = "GameSession",
+        class_name = "/Script/Engine.GameSession",
+        cdo_name = "/Script/Engine.Default__GameSession",
+        fields = { "MaxPlayers" }
     }
 }
 
 local hook_registered = false
 local hook_attempts = 0
+local pre_login_hook_registered = false
+local pre_login_hook_attempts = 0
 local notify_registered = {}
+local cdo_diagnostics_logged = {}
+-- Forward-declared so on_host_session_async_post can re-arm the PreLogin hook.
+local try_register_pre_login_hook
 
 local function get_config_by_short_name(short_name)
     for _, cfg in ipairs(CLASS_DEFS) do
@@ -142,13 +166,48 @@ local function patch_object(obj, config, scope)
     return patched
 end
 
+local function log_cdo_diag_once(key, message, ...)
+    if cdo_diagnostics_logged[key] then
+        return
+    end
+    cdo_diagnostics_logged[key] = true
+    log(message, ...)
+end
+
 local function patch_cdo(config)
     local ok, obj = pcall(function()
         return StaticFindObject(config.cdo_name)
     end)
-    if ok and is_valid(obj) then
-        patch_object(obj, config, "CDO " .. config.short_name)
+    if not ok then
+        log_cdo_diag_once(config.cdo_name .. "#err",
+            "CDO %s: StaticFindObject errored (%s): %s",
+            config.short_name, config.cdo_name, tostring(obj))
+        return
     end
+    if not is_valid(obj) then
+        log_cdo_diag_once(config.cdo_name .. "#missing",
+            "CDO %s: not found at %s", config.short_name, config.cdo_name)
+        return
+    end
+
+    -- CDO exists; probe each field so we can tell "found but field not a UProperty"
+    -- apart from "CDO not found". Numeric fields fall through to patch_object below.
+    for _, field_name in ipairs(config.fields) do
+        local ok_read, value = pcall(function()
+            return obj[field_name]
+        end)
+        if not ok_read then
+            log_cdo_diag_once(config.cdo_name .. "." .. field_name .. "#err",
+                "CDO %s.%s: read errored: %s",
+                config.short_name, field_name, tostring(value))
+        elseif type(value) ~= "number" then
+            log_cdo_diag_once(config.cdo_name .. "." .. field_name .. "#nan",
+                "CDO %s.%s: present but non-numeric (type=%s, value=%s)",
+                config.short_name, field_name, type(value), tostring(value))
+        end
+    end
+
+    patch_object(obj, config, "CDO " .. config.short_name)
 end
 
 local function patch_instances(config)
@@ -225,6 +284,52 @@ local function on_host_session_async_post(...)
             log("HostSessionAsync post: SN2GameSession.MaxPlayers=%d", val)
         end
     end
+
+    -- A session was just created -- if PreLogin still isn't armed (boot-time
+    -- retries gave up before the GameMode existed), kick a fresh retry window.
+    if not pre_login_hook_registered then
+        log("PreLogin hook not yet armed; retrying now that session was created")
+        pre_login_hook_attempts = 0
+        local ok, err = pcall(try_register_pre_login_hook)
+        if not ok then
+            log("PreLogin retry from session post-hook errored: %s", tostring(err))
+        end
+    end
+end
+
+local function on_pre_login_pre(self_param, options_param, address_param, unique_id_param, error_param)
+    local self_obj = unwrap_param(self_param)
+    if not is_valid(self_obj) then
+        return
+    end
+    log("PreLogin: player attempting to connect -- re-asserting MaxPlayers")
+    set_numeric_field(self_obj, "MaxPlayers", "PreLogin self")
+    apply_existing_patches()
+end
+
+try_register_pre_login_hook = function()
+    if pre_login_hook_registered then
+        return
+    end
+    pre_login_hook_attempts = pre_login_hook_attempts + 1
+
+    local ok, pre_id, post_id = pcall(function()
+        return RegisterHook(PRE_LOGIN_HOOK_PATH, on_pre_login_pre)
+    end)
+
+    if ok and type(pre_id) == "number" then
+        pre_login_hook_registered = true
+        log("Registered %s", PRE_LOGIN_HOOK_PATH)
+        return
+    end
+
+    if pre_login_hook_attempts < MAX_HOOK_ATTEMPTS then
+        ExecuteWithDelay(HOOK_RETRY_DELAY_MS, function()
+            ExecuteInGameThread(try_register_pre_login_hook)
+        end)
+        return
+    end
+    log("Could not register %s after %d attempts", PRE_LOGIN_HOOK_PATH, pre_login_hook_attempts)
 end
 
 local function try_register_host_session_hook()
@@ -271,6 +376,22 @@ local function start_monitor()
                 apply_existing_patches()
             end
         end
+        local ge = FindFirstOf("GameEngine")
+        if ge then
+            local val = read_numeric_field(ge, "MaxPlayers")
+            if val and val ~= TARGET_MAX_PLAYERS then
+                log("WARNING: GameEngine.MaxPlayers changed to %d! Re-patching...", val)
+                apply_existing_patches()
+            end
+        end
+        local ags = FindFirstOf("GameSession")
+        if ags then
+            local val = read_numeric_field(ags, "MaxPlayers")
+            if val and val ~= TARGET_MAX_PLAYERS then
+                log("WARNING: GameSession.MaxPlayers changed to %d! Re-patching...", val)
+                apply_existing_patches()
+            end
+        end
         ExecuteWithDelay(MONITOR_DELAY_MS, monitor_loop)
     end
     ExecuteWithDelay(MONITOR_DELAY_MS, monitor_loop)
@@ -282,6 +403,7 @@ local function bootstrap()
     end
     apply_existing_patches()
     try_register_host_session_hook()
+    try_register_pre_login_hook()
     start_monitor() -- Start optional monitor
     log("Loaded. Target max players = %d", TARGET_MAX_PLAYERS)
 end
@@ -291,6 +413,7 @@ ExecuteInGameThread(bootstrap)
 ExecuteWithDelay(PATCH_RETRY_DELAY_MS_1, function()
     ExecuteInGameThread(apply_existing_patches)
     ExecuteInGameThread(try_register_host_session_hook)
+    ExecuteInGameThread(try_register_pre_login_hook)
 end)
 
 ExecuteWithDelay(PATCH_RETRY_DELAY_MS_2, function()
