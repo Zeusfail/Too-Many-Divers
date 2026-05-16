@@ -114,7 +114,7 @@ Game starts
 ### Requirements
 - Subnautica 2 Early Access
 - [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS)
-- [Mod Settings for Subnautica 2](https://www.nexusmods.com/subnautica2)
+- [Mod Settings for Subnautica 2](https://www.nexusmods.com/subnautica2/mods/20)
 
 ### Installation
 1. Download the [experimental release](https://github.com/Zeusfail/Too-Many-Divers/releases/tag/Experimental) and extract it
