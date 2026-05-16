@@ -45,9 +45,6 @@ local function write_sn2modsettings_manifest()
         print(string.format("%s SN2ModSettings manifest: impossible d'ecrire %s\n", MOD_TAG, MANIFEST_PATH))
         return
     end
-    local function f2s(n)
-        return (string.format("%.2f", n):gsub(",", "."))
-    end
     f:write(string.format([=[return {
     name    = "TooManyDivers",
     display = "Too Many Divers",
@@ -57,17 +54,18 @@ local function write_sn2modsettings_manifest()
             title       = "Max Players",
             description = "Nombre maximum de joueurs par session (%d a %d). Les changements s appliquent en temps reel sans redemarrer.",
             type        = "slider",
-            default     = %s,
-            min         = %s,
-            max         = %s,
-            step        = 0.01,
+            format      = "integer",
+            default     = %d,
+            min         = %d,
+            max         = %d,
+            step        = 1,
         },
     },
 }
 ]=], MIN_MAX_PLAYERS, MAX_MAX_PLAYERS,
-        f2s(TARGET_MAX_PLAYERS / 100.0),
-        f2s(MIN_MAX_PLAYERS     / 100.0),
-        f2s(MAX_MAX_PLAYERS     / 100.0)))
+        TARGET_MAX_PLAYERS,
+        MIN_MAX_PLAYERS,
+        MAX_MAX_PLAYERS))
     f:close()
     print(string.format("%s SN2ModSettings manifest ecrit (default=%d)\n", MOD_TAG, TARGET_MAX_PLAYERS))
 end
@@ -330,7 +328,7 @@ local function load_from_shared()
         return ModRef:GetSharedVariable("SN2ModSettings/TooManyDivers/MaxPlayers")
     end)
     if not ok or raw == nil or type(raw) ~= "number" then return end
-    local value = math.floor(raw * 100 + 0.5)
+    local value = math.floor(raw + 0.5)
     if value < MIN_MAX_PLAYERS or value > MAX_MAX_PLAYERS then return end
     if value == TARGET_MAX_PLAYERS then return end
     TARGET_MAX_PLAYERS = value
@@ -374,7 +372,7 @@ LoopAsync(1000, function()
         return ModRef:GetSharedVariable("SN2ModSettings/TooManyDivers/MaxPlayers")
     end)
     if not ok or raw == nil or type(raw) ~= "number" then return end
-    local value = math.floor(raw * 100 + 0.5)
+    local value = math.floor(raw + 0.5)
     if value < MIN_MAX_PLAYERS or value > MAX_MAX_PLAYERS then return end
     if value == TARGET_MAX_PLAYERS then return end
     TARGET_MAX_PLAYERS = value
