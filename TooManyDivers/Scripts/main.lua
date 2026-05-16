@@ -341,6 +341,15 @@ local function bootstrap()
     for _, config in ipairs(CLASS_DEFS) do
         register_new_object_notify(config)
     end
+    -- Pré-remplir le cache avec les instances déjà présentes au chargement
+    -- (ex: UWEOnlineSessionSubsystem créé avant le mod, jamais vu par NotifyOnNewObject)
+    for _, config in ipairs(CLASS_DEFS) do
+        local ok, obj = pcall(function() return FindFirstOf(config.short_name) end)
+        if ok and obj and is_valid(obj) then
+            cached_instances[config.short_name] = obj
+            log("Cache pre-rempli: %s", config.short_name)
+        end
+    end
     load_from_shared()
     apply_existing_patches()   -- appel unique au démarrage, état stable
     try_register_host_session_hook()
