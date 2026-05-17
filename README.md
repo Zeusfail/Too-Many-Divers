@@ -145,7 +145,7 @@ Yes — delete the `TooManyDivers` folder. No game files are modified.
 **Does the mod send any data externally?**
 No. No telemetry, no external calls. Fully client-side and open source.
 
-**UE4SS fails to find GUObjectArray?**
+**“Could not find the UE version?**
 Add this to your UE4SS config file:
 ```ini
 [EngineVersionOverride]
