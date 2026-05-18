@@ -1,4 +1,6 @@
 local MOD_TAG = "[TooManyDivers]"
+local MOD_VERSION = "1.2.0"
+local GITHUB_REPO = "Zeusfail/Too-Many-Divers"
 
 local DEFAULT_MAX_PLAYERS = 16
 local MIN_MAX_PLAYERS = 4
@@ -46,13 +48,16 @@ local function write_sn2modsettings_manifest()
         return
     end
     f:write(string.format([=[return {
-    name    = "TooManyDivers",
-    display = "Too Many Divers",
+    name            = "TooManyDivers",
+    display         = "Too Many Divers",
+    version         = "%s",
+    github          = "%s",
+    nexus_id        = "73",
     settings = {
         {
             key         = "MaxPlayers",
             title       = "Max Players",
-            description = "Nombre maximum de joueurs par session (%d a %d). Les changements s appliquent en temps reel sans redemarrer.",
+            description = "Maximum number of players per session (%d to %d). Changes apply in real time without restarting.",
             type        = "slider",
             format      = "integer",
             default     = %d,
@@ -62,7 +67,7 @@ local function write_sn2modsettings_manifest()
         },
     },
 }
-]=], MIN_MAX_PLAYERS, MAX_MAX_PLAYERS,
+]=], MOD_VERSION, GITHUB_REPO, MIN_MAX_PLAYERS, MAX_MAX_PLAYERS,
         TARGET_MAX_PLAYERS,
         MIN_MAX_PLAYERS,
         MAX_MAX_PLAYERS))

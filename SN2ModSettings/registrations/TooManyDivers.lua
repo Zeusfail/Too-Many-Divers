@@ -5,13 +5,16 @@
 -- synchronise avec config/settings.json, mais sa presence a l'installation evite
 -- de devoir lancer le jeu deux fois.
 return {
-    name    = "TooManyDivers",
-    display = "Too Many Divers",
+    name            = "TooManyDivers",
+    display         = "Too Many Divers",
+    version         = "1.2.0",
+    github          = "Zeusfail/Too-Many-Divers",
+    nexus_id        = "73",
     settings = {
         {
             key         = "MaxPlayers",
             title       = "Max Players",
-            description = "Nombre maximum de joueurs par session (4 a 64). Les changements s appliquent en temps reel sans redemarrer.",
+            description = "Maximum number of players per session (4 to 64). Changes apply in real time without restarting.",
             type        = "slider",
             format      = "integer",
             default     = 16,
