@@ -3,7 +3,7 @@
 > A [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) mod for **Subnautica 2** that removes the default 4-player co-op cap.
 
 ![License](https://img.shields.io/badge/license-Apache2.0-blue)
-![Status](https://img.shields.io/badge/stable-confirmed_9_players-green)
+![Status](https://img.shields.io/badge/stable-confirmed_16_players-green)
 ![UE4SS](https://img.shields.io/badge/UE4SS-3.0.1-orange)
 
 ---
@@ -185,4 +185,4 @@ See [CHANGELOG.md](CHANGELOG.md) for full history.
 Made with love from French Polynesia 🌺
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+Apache 2.0 — see [LICENSE](LICENSE) for details.
