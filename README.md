@@ -1,3 +1,5 @@
+
+
 # Too-Many-Divers
 
 > A [UE4SS](https://github.com/UE4SS-RE/RE-UE4SS) mod for **Subnautica 2** that removes the default 4-player co-op cap.
@@ -101,7 +103,7 @@ Game starts
 Edit `TooManyDivers/config/settings.json`:
 ```json
 {
-  "MAX_PLAYERS": 16
+  "MaxPlayers": 16
 }
 ```
 Valid range: **4 – 64** — changes apply live without restarting the game.
