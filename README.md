@@ -193,4 +193,4 @@ Apache 2.0 — see [LICENSE](LICENSE) for details.
 
 [![AI assistance: level 2/5](https://img.shields.io/badge/AI_assistance-level_2%2F5-blue)](https://github.com/Zeusfail/Zeusfail/blob/main/AI-CHARTER.md)
 
-Built with AI assistance (Qwen 3.6, level 2/5). The AI reviewed the code, added tests and robustness checks, and rewrote parts of it for readability; the original code and the Subnautica 2 data research are mine. Reviewed and validated by Zayla (Zeusfail). Details: [AI transparency charter](https://github.com/Zeusfail/Zeusfail/blob/main/AI-CHARTER.md) (in French).
+Built with AI assistance (Qwen 3.6, level 2/5). The AI reviewed the code, added tests and robustness checks, and rewrote parts of it for readability; the original code and the Subnautica 2 data research are mine. Reviewed and validated by Zayla (Zeusfail). Details: [AI transparency charter](https://github.com/Zeusfail/Zeusfail/blob/main/AI-CHARTER.md).
