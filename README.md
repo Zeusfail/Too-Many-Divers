@@ -217,7 +217,6 @@ See [CHANGELOG.md](CHANGELOG.md) for full history.
 
 💬 Discord `zeusfail`
 ☕ [Support the mod](https://buymeacoffee.com/zayla)
-🔗 [Source Code](https://github.com/Zeusfail/Too-Many-Divers)
 
 Made with love from French Polynesia 🌺
 ## License
