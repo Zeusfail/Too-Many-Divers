@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## Too Many Divers - Voice [1.0.0] - 2026-10-30
+
+### Added
+- New add-on `TooManyDiversVoice`, to be installed by **every player**: proximity voice chat for up to 9 players.
+  The game's voice pool (`UWEVoiceChatWorldSubsystem.ActiveChatAssets`) only holds 3 FMOD slots
+  (`player_01/03/04`), so each machine played at most 3 remote voices. The add-on fills the pool with the unused
+  slots shipped in the FMOD banks (`player_00..07`, event + VCA). Verified in-game (3 -> 8 slots); not yet tested
+  with 5+ real players.
+- Settings in `config/settings.json` and SN2ModSettings (Settings → Mods): `Enabled` toggle and
+  `MaxVoicePlayers` slider (4 – 9). Applied the next time a game is loaded.
+
+---
+
+## [1.2.1] - 2026-10-30
+
+### Fixed
+- The host session request is now patched on its real field, `MaxPlayerCount` (inherited from
+  `UCommonSession_HostSessionRequest`); the old `MaxPlayers` / `MaxSessionPlayerCount` names do not exist on that class.
+- The request is patched when it is created and again on the next tick, because `HostSessionAsync` is called natively
+  and the UE4SS hook on it never fires; that hook has been removed.
+- Removed debug log messages; warnings (missing objects, invalid config) are kept.
+- README: config key is `MaxPlayers` (not `MAX_PLAYERS`); patched objects table matches the code.
+
+### Compatibility
+- Verified loading and patching on Subnautica 2 Early Access 1.2 (Buddy System Hotfix 2, Xbox build 0.13.1439).
+
+---
+
 ## [1.2.0] - 2026-05-18
 
 ### Added

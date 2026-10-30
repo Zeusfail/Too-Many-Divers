@@ -7,7 +7,7 @@
 return {
     name            = "TooManyDivers",
     display         = "Too Many Divers",
-    version         = "1.2.0",
+    version         = "1.2.1",
     github          = "Zeusfail/Too-Many-Divers",
     nexus_id        = "73",
     settings = {
